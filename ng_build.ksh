@@ -16,6 +16,7 @@
 #		-D directory	-- the directory that the source is in ($TMP/$USER/dev)
 #		-h		-- show help info
 #		-i directory    -- install only; pkg files in current directory are installed into dir listed
+#		-M		-- build just mk and stop (leaves mk in ./.bin)
 #		-k		-- keep tmp files and such after build
 #		-n		-- do not fetch source from cvs (fetch if script thinks necessary)
 #		-N		-- nuke first
@@ -241,6 +242,7 @@ function usage
 		-D dir  dir where ningaui src tree is, or will be after fetch (see note)
 		-f	force source fetch (fetch done only if script thinks it is needed)
 		-i dir  Install pacakges from this directory into dir and exit (all other actions/options ignored)
+		-M	Build mk and stop (leaves mk binary in ./.bin)
 		-k 	keep temp files	(temp files are removed)
 		-r dir	directory used as NG_ROOT during the build (see note)
 		-s path path to Kshell to use with #! in .ksh scripts (first ksh found in search of obvious places)
@@ -356,6 +358,7 @@ then
 	log_msg "cannot find gcc; using cc instead [WARN]"
 fi
 
+mk_only=0
 while [[ $1 == -* ]]
 do
 	case $1 in 
@@ -375,6 +378,7 @@ do
 
 		-k)	keep=1;;
 
+		-M)	mk_only=1;;		# bulid mk only then stop
 		-n)	check_out=0;;		# now the default, but kept for back compat
 		-N)	nuke_first=1;;
 
@@ -532,7 +536,7 @@ then
 	fi
 fi
 
-if (( $do_all > 0 ))
+if (( $do_all > 0 || mk_only > 0 ))
 then
 	set -e
 	cd $NG_SRC
@@ -552,6 +556,12 @@ then
 	then
 		log_msg "failed to build mk; see $NG_SRC/build_log"
 		exit 1
+	fi
+
+	if (( mk_only > 0 ))
+	then
+		log_msg "finshed: -M given so building only mk"
+		exit 0
 	fi
 
 	if (( $nuke_first > 0 ))
